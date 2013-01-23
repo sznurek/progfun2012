@@ -16,8 +16,8 @@ let rec substitute v t = function
     | boolean             -> boolean
 
 let rec nonlazy_is_value = function
-    | App (Var _, x) -> nonlazy_is_value x
-    | App _          -> false
+    | App (Abs _, _) -> false
+    | App (_, x)     -> nonlazy_is_value x
     | If (x, _, _)   -> nonlazy_is_value x && x <> True && x <> False
     | _              -> true
 
