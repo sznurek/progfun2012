@@ -22,16 +22,16 @@
 
 ; Applications
 (define (make-app lam term)
-  (list lam term))
+  (list 'app lam term))
 
 (define (app-lambda app)
-  (car app))
-
-(define (app-argument app)
   (cadr app))
 
+(define (app-argument app)
+  (caddr app))
+
 (define (app? app)
-  (and (list? app) (not (empty? app)) (lambda? (first app))))
+  (and (list? app) (not (empty? app)) (eq? (first app) 'app)))
 
 ; Closure
 (define (make-closure env lam)
@@ -84,7 +84,7 @@
        (eq? (first C) 'apply))
      (let ([int (first (rest S))]
            [Sp (rest (rest S))])
-       (run (cons (+ int 1) Sp) E C D))]
+       (run (cons (+ int 1) Sp) E (rest C) D))]
     [(and
        (not (empty? C))
        (>= (length S) 2)
