@@ -45,51 +45,60 @@
 
 ; Evaluator
 
+(define (computation-end? S E C D)
+  (and (eq? (length S) 1) (empty? C) (empty? D)))
+
+(define (function-return? S E C D)
+  (and (eq? (length S) 1) (empty? C) (not (empty? D))))
+
+(define (integer-push? S E C D)
+  (and (not (empty? C)) (integer? (first C))))
+
+(define (var-lookup? S E C D)
+  (and (not (empty? C)) (string? (first C))))
+
+(define (closure-push? S E C D)
+  (and (not (empty? C)) (lambda? (first C))))
+
+(define (apply-push? S E C D)
+  (and (not (empty? C)) (app? (first C))))
+
+(define (succ-apply? S E C D)
+  (and
+    (>= (length S) 2)
+    (eq? (first S) 'succ)
+    (integer? (first (rest S)))
+    (not (empty? C))
+    (eq? (first C) 'apply)))
+
+(define (closure-apply? S E C D)
+  (and
+    (not (empty? C))
+    (>= (length S) 2)
+    (closure? (first S))
+    (eq? (first C) 'apply)))
+
 (define (run S E C D)
   (cond
-    [(and
-       (eq? (length S) 1)
-       (empty? C)
-       (empty? D))
-     (first S)]
-    [(and
-       (eq? (length S) 1)
-       (empty? C)
-       (not (empty? D)))
+    [(computation-end? S E C D) (first S)]
+    [(function-return? S E C D)
      (let ([s (car (first D))]
            [e (cadr (first D))]
            [c (caddr (first D))])
        (run (append S s) e c (rest D)))]
-    [(and
-       (not (empty? C))
-       (integer? (first C)))
+    [(integer-push? S E C D)
      (run (cons (first C) S) E (rest C) D)]
-    [(and
-       (not (empty? C))
-       (string? (first C)))
+    [(var-lookup? S E C D)
      (run (cons (env-lookup E (first C)) S) E (rest C) D)]
-    [(and
-       (not (empty? C))
-       (lambda? (first C)))
+    [(closure-push? S E C D)
      (run (cons (make-closure E (first C)) S) E (rest C) D)]
-    [(and
-       (not (empty? C))
-       (app? (first C)))
+    [(apply-push? S E C D)
      (run S E (append (list (app-argument (first C)) (app-lambda (first C)) 'apply) (rest C)) D)]
-    [(and
-       (>= (length S) 2)
-       (eq? (first S) 'succ)
-       (integer? (first (rest S)))
-       (not (empty? C))
-       (eq? (first C) 'apply))
+    [(succ-apply? S E C D)
      (let ([int (first (rest S))]
            [Sp (rest (rest S))])
        (run (cons (+ int 1) Sp) E (rest C) D))]
-    [(and
-       (not (empty? C))
-       (>= (length S) 2)
-       (closure? (first S))
-       (eq? (first C) 'apply))
+    [(closure-apply? S E C D)
      (let* ([c (first S)]
             [v (first (rest S))]
             [Ep (closure-env c)]
